@@ -295,12 +295,39 @@ async def handle_modal(page) -> tuple[str, str]:
 
                     if btn_label in ("Submit application", "Submit"):
                         # Wait for confirmation banner then click Done
-                        await page.wait_for_timeout(150)
-                        done_btn = page.locator('button:has-text("Done")')
-                        if await done_btn.count() > 0:
-                            log.info("    → Clicking 'Done'")
-                            await done_btn.first.click()
-                            await page.wait_for_timeout(50)
+                        try:
+                            # Wait for the success modal to appear
+                            await page.wait_for_selector('[role="dialog"]:has-text("Application sent")', timeout=3000)
+                        except Exception:
+                            pass
+
+                        await page.wait_for_timeout(800)
+
+                        # Try multiple selector strategies to find the Done button
+                        done_selectors = [
+                            'button:has-text("Done"):visible',
+                            '[role="dialog"] button:has-text("Done")',
+                            '.artdeco-modal__content button.artdeco-button--primary',
+                            '[data-artdeco-modal-outlet] button:last-of-type',
+                        ]
+
+                        done_clicked = False
+                        for selector in done_selectors:
+                            try:
+                                btn = page.locator(selector)
+                                if await btn.count() > 0:
+                                    log.info(f"    → Clicking 'Done' (selector: {selector})")
+                                    await btn.first.click(timeout=5000)
+                                    await page.wait_for_timeout(500)
+                                    done_clicked = True
+                                    break
+                            except Exception as e:
+                                log.debug(f"    ⚠  Selector failed: {selector} - {e}")
+                                continue
+
+                        if not done_clicked:
+                            log.warning("    ⚠  Done button not found, but returning submitted")
+
                         return "submitted", ""
                     break  # clicked something, re-loop
 
@@ -431,7 +458,7 @@ async def process_query(page, query: str, applied_count: list[int]):
 
                 # Click Easy Apply
                 await easy_btn.first.click()
-                await page.wait_for_timeout(600)
+                await page.wait_for_timeout(200)
 
                 # Handle the application form
                 status, notes = await handle_modal(page)
@@ -467,7 +494,7 @@ async def process_query(page, query: str, applied_count: list[int]):
         if await next_btn.count() > 0 and not await next_btn.first.is_disabled():
             log.info("  → Next page")
             await next_btn.first.click()
-            await page.wait_for_timeout(1200)
+            await page.wait_for_timeout(400)
         else:
             log.info("  No further pages for this query.")
             break
