@@ -106,13 +106,13 @@ async def dismiss_modal(page):
         )
         if await close.count() > 0:
             await close.first.click()
-            await page.wait_for_timeout(1200)
+            await page.wait_for_timeout(400)
 
         # Confirm discard dialog
         discard = page.locator('button:has-text("Discard"), button:has-text("Confirm")')
         if await discard.count() > 0:
             await discard.first.click()
-            await page.wait_for_timeout(800)
+            await page.wait_for_timeout(300)
     except Exception:
         pass
 
@@ -138,7 +138,7 @@ async def handle_modal(page) -> tuple[str, str]:
         'submitted', 'skipped', 'error'
     """
     for step in range(15):
-        await page.wait_for_timeout(1500)
+        await page.wait_for_timeout(400)
 
         # Check if modal is still visible
         modal = page.locator(".jobs-easy-apply-modal, [data-test-modal]")
@@ -291,16 +291,16 @@ async def handle_modal(page) -> tuple[str, str]:
                 if not await b.is_disabled():
                     log.info(f"    → Clicking '{btn_label}'")
                     await b.click()
-                    await page.wait_for_timeout(2000)
+                    await page.wait_for_timeout(600)
 
                     if btn_label in ("Submit application", "Submit"):
                         # Wait for confirmation banner then click Done
-                        await page.wait_for_timeout(2000)
+                        await page.wait_for_timeout(500)
                         done_btn = page.locator('button:has-text("Done")')
                         if await done_btn.count() > 0:
                             log.info("    → Clicking 'Done'")
                             await done_btn.first.click()
-                            await page.wait_for_timeout(1000)
+                            await page.wait_for_timeout(300)
                         return "submitted", ""
                     break  # clicked something, re-loop
 
@@ -338,10 +338,10 @@ async def process_query(page, query: str, applied_count: list[int]):
 
     await page.goto(url)
     try:
-        await page.wait_for_load_state("networkidle", timeout=15000)
+        await page.wait_for_load_state("networkidle", timeout=12000)
     except PlaywrightTimeout:
         pass
-    await page.wait_for_timeout(2000)
+    await page.wait_for_timeout(800)
 
     page_num = 0
 
@@ -376,9 +376,9 @@ async def process_query(page, query: str, applied_count: list[int]):
             try:
                 card = job_links.nth(i)
                 await card.scroll_into_view_if_needed()
-                await asyncio.sleep(0.5)
+                await asyncio.sleep(0.2)
                 await card.click()
-                await page.wait_for_timeout(2000)
+                await page.wait_for_timeout(700)
                 job_url = page.url
 
                 # Extract job title
@@ -431,7 +431,7 @@ async def process_query(page, query: str, applied_count: list[int]):
 
                 # Click Easy Apply
                 await easy_btn.first.click()
-                await page.wait_for_timeout(2000)
+                await page.wait_for_timeout(600)
 
                 # Handle the application form
                 status, notes = await handle_modal(page)
@@ -467,7 +467,7 @@ async def process_query(page, query: str, applied_count: list[int]):
         if await next_btn.count() > 0 and not await next_btn.first.is_disabled():
             log.info("  → Next page")
             await next_btn.first.click()
-            await page.wait_for_timeout(3000)
+            await page.wait_for_timeout(1200)
         else:
             log.info("  No further pages for this query.")
             break
@@ -498,7 +498,6 @@ async def main():
         browser = await pw.chromium.launch(
             headless=CONFIG["headless"],
             args=["--start-maximized", "--disable-blink-features=AutomationControlled"],
-            slow_mo=80,
         )
 
         # Load saved session if available

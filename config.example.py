@@ -11,8 +11,8 @@ CONFIG = {
 
     # ── Application Behavior ───────────────────────────────
     "max_applications": 50,              # Stop after this many successful applications
-    "delay_between_apps": (4, 10),       # Random pause (seconds) between applications
-                                         # — keeps activity looking human
+    "delay_between_apps": (2, 5),        # Random pause (seconds) between applications
+                                         # — keeps activity looking human (2-5 sec = fast & natural)
 
     # ── Work Authorization ─────────────────────────────────
     "work_authorization": "Yes",         # "Yes" or "No"
