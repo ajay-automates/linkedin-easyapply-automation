@@ -106,13 +106,13 @@ async def dismiss_modal(page):
         )
         if await close.count() > 0:
             await close.first.click()
-            await page.wait_for_timeout(400)
+            await page.wait_for_timeout(100)
 
         # Confirm discard dialog
         discard = page.locator('button:has-text("Discard"), button:has-text("Confirm")')
         if await discard.count() > 0:
             await discard.first.click()
-            await page.wait_for_timeout(300)
+            await page.wait_for_timeout(50)
     except Exception:
         pass
 
@@ -138,7 +138,7 @@ async def handle_modal(page) -> tuple[str, str]:
         'submitted', 'skipped', 'error'
     """
     for step in range(15):
-        await page.wait_for_timeout(400)
+        await page.wait_for_timeout(150)
 
         # Check if modal is still visible
         modal = page.locator(".jobs-easy-apply-modal, [data-test-modal]")
@@ -291,23 +291,23 @@ async def handle_modal(page) -> tuple[str, str]:
                 if not await b.is_disabled():
                     log.info(f"    → Clicking '{btn_label}'")
                     await b.click()
-                    await page.wait_for_timeout(600)
+                    await page.wait_for_timeout(200)
 
                     if btn_label in ("Submit application", "Submit"):
                         # Wait for confirmation banner then click Done
-                        await page.wait_for_timeout(500)
+                        await page.wait_for_timeout(150)
                         done_btn = page.locator('button:has-text("Done")')
                         if await done_btn.count() > 0:
                             log.info("    → Clicking 'Done'")
                             await done_btn.first.click()
-                            await page.wait_for_timeout(300)
+                            await page.wait_for_timeout(50)
                         return "submitted", ""
                     break  # clicked something, re-loop
 
         else:
             # No clickable button found — stuck
             log.warning("    ⚠  No navigation button found on this step")
-            await page.wait_for_timeout(1000)
+            await page.wait_for_timeout(300)
 
     log.warning("    ⚠  Exceeded max steps without submitting")
     await dismiss_modal(page)
@@ -338,10 +338,10 @@ async def process_query(page, query: str, applied_count: list[int]):
 
     await page.goto(url)
     try:
-        await page.wait_for_load_state("networkidle", timeout=12000)
+        await page.wait_for_load_state("networkidle", timeout=8000)
     except PlaywrightTimeout:
         pass
-    await page.wait_for_timeout(800)
+    await page.wait_for_timeout(300)
 
     page_num = 0
 
@@ -376,9 +376,9 @@ async def process_query(page, query: str, applied_count: list[int]):
             try:
                 card = job_links.nth(i)
                 await card.scroll_into_view_if_needed()
-                await asyncio.sleep(0.2)
+                await asyncio.sleep(0.05)
                 await card.click()
-                await page.wait_for_timeout(700)
+                await page.wait_for_timeout(300)
                 job_url = page.url
 
                 # Extract job title
